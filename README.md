@@ -1,8 +1,11 @@
 # Sitemap Check
 
+## Install
+
+`gem install sitemap_check`
+
 ## Usage
 
 ```bash
-$ bundle install
-$ CHECK_URL=http://reevoo.com/sitemap_index.xml bundle exec ruby sitemap_check.rb
+$ CHECK_URL=http://reevoo.com/sitemap_index.xml sitemap_check
 ```

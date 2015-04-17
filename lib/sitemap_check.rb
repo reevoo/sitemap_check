@@ -8,9 +8,10 @@ class SitemapCheck
     new.check
   end
 
-  def initialize
+  def initialize(http = HTTPClient.new)
+    self.exit_code = 0
     puts "Expanding Sitemaps from #{ENV['CHECK_URL']}"
-    self.sitemaps = Sitemap.new(ENV['CHECK_URL']).sitemaps
+    self.sitemaps = Sitemap.new(ENV['CHECK_URL'], http).sitemaps
   end
 
   def check
@@ -33,20 +34,38 @@ class SitemapCheck
     puts ''
   end
 
+  def good_sitemaps
+    sitemaps.select(&:exists?)
+  end
+
   def check_pages
-    sitemaps.select(&:exists?).each do |sitemap|
-      puts "Checking #{sitemap.url}"
-      if sitemap.missing_pages.any?
-        self.exit_code = 1
-        puts "checked #{sitemap.checked} pages and #{sitemap.missing_pages.count} were missing".red.bold
+    good_sitemaps.each { |sitemap| check_pages_in(sitemap) }
+  end
+
+  def check_pages_in(sitemap)
+    puts "Checking #{sitemap.url}"
+    if sitemap.missing_pages.any?
+      missing_pages(sitemap)
+    else
+      if sitemap.checked > 0
+        a_ok(sitemap)
       else
-        if sitemap.checked > 0
-          puts "checked #{sitemap.checked} pages and everything was ok".green.bold
-        else
-          puts 'this sitemap did not contain any pages'.green
-        end
+        nothing_doing
       end
-      puts ''
     end
+    puts ''
+  end
+
+  def missing_pages(sitemap)
+    self.exit_code = 1
+    puts "checked #{sitemap.checked} pages and #{sitemap.missing_pages.count} were missing".red.bold
+  end
+
+  def a_ok(sitemap)
+    puts "checked #{sitemap.checked} pages and everything was ok".green.bold
+  end
+
+  def nothing_doing
+    puts 'this sitemap did not contain any pages'.green
   end
 end

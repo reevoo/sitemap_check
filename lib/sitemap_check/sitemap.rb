@@ -5,19 +5,21 @@ require 'colorize'
 
 class SitemapCheck
   class Sitemap
-    def initialize(url)
+    def initialize(url, http = HTTPClient.new)
       self.url = url
       self.checked = 0
+      self.http = http
       setup_doc
     end
 
-    attr_accessor :doc, :url, :checked
+    attr_reader :url, :checked
 
     def sitemaps
-      maps.map do |sitemap|
-        map = Sitemap.new(sitemap.loc.text)
-        [self, map] + map.sitemaps
-      end.flatten.uniq(&:url)
+      expanded_sitemaps = maps.map do |sitemap|
+        map = Sitemap.new(sitemap.loc.text, http)
+        [map] + map.sitemaps
+      end.flatten
+      (expanded_sitemaps + [self]).uniq(&:url)
     end
 
     def missing_pages
@@ -28,31 +30,32 @@ class SitemapCheck
       @ok
     end
 
-    private
+    protected
 
-    def http
-      @_http ||= HTTPClient.new
-    end
+    attr_accessor :http, :doc
+    attr_writer :url, :checked
+
+    private
 
     def concurency
       ENV.fetch('CONCURENCY', 10)
     end
 
-    def find_missing_pages
+    def find_missing_pages # rubocop:disable Metrics/AbcSize
       q = Queue.new
       mutex = Mutex.new
       pages.each { |page| q.push page }
       concurency.times.map do
         Thread.new do
           begin
-            while page = q.pop(true)
+            while (page = q.pop(true))
               unless page.exists?
                 puts "  missing: #{page.url}".red
                 page
               end
-              mutex.synchronize { self.checked +=1 }
+              mutex.synchronize { self.checked += 1 }
             end
-          rescue ThreadError
+          rescue ThreadError # rubocop:disable Lint/HandleExceptions
           end
         end
       end.each(&:join)

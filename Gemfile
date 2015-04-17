@@ -1,5 +1,4 @@
 source 'https://rubygems.org'
 
-gem 'nokogiri'
-gem 'httpclient'
-gem 'colorize'
+# Specify your gem's dependencies in sitemap_check.gemspec
+gemspec

@@ -2,20 +2,21 @@ require 'httpclient'
 
 class SitemapCheck
   class Page
-    def initialize(url, client = HTTPClient.new)
+    def initialize(url, http = HTTPClient.new, holdoff = 1)
       self.url = url
       self.http = http
+      self.tries = 0
+      self.holdoff = holdoff
     end
 
     attr_reader :url
 
     def exists?
-      tries = 0
       @_exists ||= http.head(url, follow_redirect: true).ok?
     rescue SocketError, HTTPClient::ConnectTimeoutError
-      tries += 1
+      self.tries += 1
       if tries < 5
-        sleep 1
+        sleep holdoff
         retry
       else
         @_exists = false
@@ -26,7 +27,7 @@ class SitemapCheck
 
     protected
 
-    attr_accessor :http
+    attr_accessor :http, :tries, :holdoff
     attr_writer :url
   end
 end
