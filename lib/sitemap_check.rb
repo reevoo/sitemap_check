@@ -9,6 +9,7 @@ class SitemapCheck
   end
 
   def initialize(http = HTTPClient.new)
+    self.start_time = Time.now
     self.exit_code = 0
     puts "Expanding Sitemaps from #{ENV['CHECK_URL']}"
     self.sitemaps = Sitemap.new(ENV['CHECK_URL'], http).sitemaps
@@ -17,14 +18,32 @@ class SitemapCheck
   def check
     check_indexes
     check_pages
+    stats
     exit exit_code
   end
 
   protected
 
-  attr_accessor :sitemaps, :exit_code
+  attr_accessor :sitemaps, :exit_code, :start_time
 
   private
+
+  def stats
+    puts "checked #{sitemaps.count} sitemaps and #{checked_pages} in #{time_taken} seconds"
+    puts "thats #{pages_per_second} pages per second"
+  end
+
+  def pages_per_second
+    checked_pages / time_taken
+  end
+
+  def time_taken
+    Time.now - start_time
+  end
+
+  def checked_pages
+    sitemaps.map(&:checked).reduce(&:+)
+  end
 
   def check_indexes
     sitemaps.reject(&:exists?).each do |sitemap|
