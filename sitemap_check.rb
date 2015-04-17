@@ -32,9 +32,18 @@ class Sitemap
   private
 
   def page_exists?(page_url)
+    tries = 0
     http = HTTPClient.new
     http.get(page_url, follow_redirect: true).ok?
-  rescue HTTPClient::BadResponseError, SocketError
+  rescue SocketError, HTTPClient::ConnectTimeoutError
+    tries += 1
+    if tries < 5
+      sleep 1
+      retry
+    else
+      false
+    end
+  rescue HTTPClient::BadResponseError
     false
   end
 
