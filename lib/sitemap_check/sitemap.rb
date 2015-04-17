@@ -1,57 +1,9 @@
-require 'nokogiri'
 require 'httpclient'
+require 'sitemap_check/page'
+require 'nokogiri'
 require 'colorize'
-require 'thread'
 
 class SitemapCheck
-
-  def self.check
-    $stdout.sync = true
-    new.check
-  end
-
-  def initialize
-    puts "Expanding Sitemaps from #{ENV['CHECK_URL']}"
-    self.sitemaps = Sitemap.new(ENV['CHECK_URL']).sitemaps
-  end
-
-  def check
-    check_indexes
-    check_pages
-    exit exit_code
-  end
-
-  protected
-
-  attr_accessor :sitemaps, :exit_code
-
-  private
-
-  def check_indexes
-    sitemaps.reject(&:exists?).each do |sitemap|
-      puts "#{sitemap.url} does not exist".red.bold
-      self.exit_code = 1
-    end
-    puts ''
-  end
-
-  def check_pages
-    sitemaps.select(&:exists?).each do |sitemap|
-      puts "Checking #{sitemap.url}"
-      if sitemap.missing_pages.any?
-        self.exit_code = 1
-        puts "checked #{sitemap.checked} pages and #{sitemap.missing_pages.count} were missing".red.bold
-      else
-        if sitemap.checked > 0
-          puts "checked #{sitemap.checked} pages and everything was ok".green.bold
-        else
-          puts 'this sitemap did not contain any pages'.green
-        end
-      end
-      puts ''
-    end
-  end
-
   class Sitemap
     def initialize(url)
       self.url = url
@@ -128,30 +80,4 @@ class SitemapCheck
       []
     end
   end
-
-  class Page
-    def initialize(url, client = HTTPClient.new)
-      self.url = url
-      self.http = http
-    end
-
-    attr_accessor :url, :http
-
-    def exists?
-      tries = 0
-      @_exists ||= http.head(url, follow_redirect: true).ok?
-    rescue SocketError, HTTPClient::ConnectTimeoutError
-      tries += 1
-      if tries < 5
-        sleep 1
-        retry
-      else
-        @_exists = false
-      end
-    rescue HTTPClient::BadResponseError
-      @_exists = false
-    end
-  end
 end
-
-SitemapCheck.check
