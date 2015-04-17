@@ -70,6 +70,7 @@ class Sitemap
   end
 end
 
+$stdout.sync = true
 exit_code = 0
 puts 'Expanding Sitemaps'
 sitemaps = Sitemap.new(ENV['CHECK_URL']).sitemaps
