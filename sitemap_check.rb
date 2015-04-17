@@ -1,13 +1,15 @@
 require 'nokogiri'
 require 'httpclient'
+require 'colorize'
 
 class Sitemap
   def initialize(url)
     self.url = url
     setup_doc
+    self.checked = 0
   end
 
-  attr_accessor :doc, :url
+  attr_accessor :doc, :url, :checked
 
   def sitemaps
     maps.map do |sitemap|
@@ -18,8 +20,9 @@ class Sitemap
 
   def missing_pages
     @_misssing ||= page_urls.map do |page_url|
+      self.checked += 1
       unless page_exists?(page_url)
-        puts "  missing: #{page_url}"
+        puts "  missing: #{page_url}".red
         page_url
       end
     end.compact
@@ -72,11 +75,11 @@ end
 
 $stdout.sync = true
 exit_code = 0
-puts 'Expanding Sitemaps'
+puts "Expanding Sitemaps from #{ENV['CHECK_URL']}"
 sitemaps = Sitemap.new(ENV['CHECK_URL']).sitemaps
 
 sitemaps.reject(&:exists?).each do |sitemap|
-  puts "#{sitemap.url} does not exist"
+  puts "#{sitemap.url} does not exist".red.bold
   exit_code = 1
 end
 
@@ -84,7 +87,16 @@ puts ''
 
 sitemaps.select(&:exists?).each do |sitemap|
   puts "Checking #{sitemap.url}"
-  exit_code = 1 if sitemap.missing_pages.any?
+  if sitemap.missing_pages.any?
+    exit_code = 1
+    puts "checked #{sitemap.checked} pages and #{sitemap.missing_pages.count} were missing".red.bold
+  else
+    if sitemap.checked > 0
+      puts "checked #{sitemap.checked} pages and everything was ok".green.bold
+    else
+      puts "this sitemap did not contain any pages".green
+    end
+  end
   puts ''
 end
 
