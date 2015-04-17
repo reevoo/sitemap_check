@@ -110,6 +110,16 @@ describe SitemapCheck::Sitemap do
       end
     end
 
+    context 'with CONCURRENCY set' do
+      it 'still works' do
+        with_env('CONCURRENCY' => '2') do
+          capture_stdout do
+            expect(subject.missing_pages).to eq([missing_page_1, missing_page_2])
+          end
+        end
+      end
+    end
+
     it 'outputs messages about the missing pages to stout' do
       output = capture_stdout do
         subject.missing_pages

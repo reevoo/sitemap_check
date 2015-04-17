@@ -38,7 +38,7 @@ class SitemapCheck
     private
 
     def concurency
-      ENV.fetch('CONCURENCY', 10)
+      ENV.fetch('CONCURRENCY', '10').to_i
     end
 
     def find_missing_pages # rubocop:disable Metrics/AbcSize
