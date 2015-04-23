@@ -1,3 +1,13 @@
 language: ruby
 rvm:
   - 2.2.2
+  - 2.1.6
+  - ruby-2.0.0-p598
+  - rbx-2.2.7
+  - ruby-head
+  - jruby-9.0.0.0.pre1
+  - jruby-1.7.19
+sudo: false
+addons:
+  code_climate:
+    repo_token: cde93e7ea7084ab026056853a375c08e590bd07541f2c2a51feb4388cf872156
