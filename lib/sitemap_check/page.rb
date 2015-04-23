@@ -13,7 +13,7 @@ class SitemapCheck
 
     def exists?
       @_exists ||= http.head(url, follow_redirect: true).ok?
-    rescue SocketError, HTTPClient::ConnectTimeoutError
+    rescue SocketError, HTTPClient::ConnectTimeoutError, Errno::ETIMEDOUT
       self.tries += 1
       if tries < 5
         sleep holdoff

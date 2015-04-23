@@ -38,7 +38,14 @@ describe SitemapCheck::Page do
 
     context 'on a ConnectTimeoutError' do
       it 'tries 5 times then returns false' do
-        expect(httpclient).to receive(:head).exactly(5).times.and_raise(SocketError)
+        expect(httpclient).to receive(:head).exactly(5).times.and_raise(HTTPClient::ConnectTimeoutError)
+        expect(subject.exists?).to be_falsey
+      end
+    end
+
+    context 'on a Errno::ETIMEDOUT' do
+      it 'tries 5 times then returns false' do
+        expect(httpclient).to receive(:head).exactly(5).times.and_raise(Errno::ETIMEDOUT)
         expect(subject.exists?).to be_falsey
       end
     end
