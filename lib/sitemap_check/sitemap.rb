@@ -1,11 +1,13 @@
 require 'httpclient'
 require 'sitemap_check/page'
+require 'sitemap_check/logger'
 require 'nokogiri'
 require 'colorize'
 
 class SitemapCheck
   class Sitemap
-    def initialize(url, http = HTTPClient.new)
+    def initialize(url, http = HTTPClient.new, logger = Logger.new)
+      self.logger = logger
       self.url = url
       self.checked = 0
       self.http = http
@@ -32,7 +34,7 @@ class SitemapCheck
 
     protected
 
-    attr_accessor :http, :doc
+    attr_accessor :http, :doc, :logger
     attr_writer :url, :checked
 
     private
@@ -43,22 +45,21 @@ class SitemapCheck
 
     def find_missing_pages # rubocop:disable Metrics/AbcSize
       q = Queue.new
-      mutex = Mutex.new
       pages.each { |page| q.push page }
       concurency.times.map do
         Thread.new do
           begin
             while (page = q.pop(true))
               unless page.exists?
-                puts "  missing: #{page.url}".red
+                logger.log "  missing: #{page.url}".red
                 page
               end
-              mutex.synchronize { self.checked += 1 }
             end
           rescue ThreadError # rubocop:disable Lint/HandleExceptions
           end
         end
       end.each(&:join)
+      self.checked = pages.count
       pages.reject(&:exists?)
     end
 

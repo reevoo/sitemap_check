@@ -3,6 +3,7 @@ require 'sitemap_check/sitemap'
 
 class SitemapCheck
 
+
   def self.check
     $stdout.sync = true
     new.check
@@ -24,7 +25,7 @@ class SitemapCheck
 
   protected
 
-  attr_accessor :sitemaps, :exit_code, :start_time
+  attr_accessor :sitemaps, :exit_code, :start_time, :logger
 
   private
 
@@ -47,7 +48,7 @@ class SitemapCheck
 
   def check_indexes
     sitemaps.reject(&:exists?).each do |sitemap|
-      puts "#{sitemap.url} does not exist".red.bold
+      puts "  #{sitemap.url} does not exist".red.bold
       self.exit_code = 1
     end
     puts ''
@@ -77,14 +78,14 @@ class SitemapCheck
 
   def missing_pages(sitemap)
     self.exit_code = 1
-    puts "checked #{sitemap.checked} pages and #{sitemap.missing_pages.count} were missing".red.bold
+    puts "  checked #{sitemap.checked} pages and #{sitemap.missing_pages.count} were missing".red.bold
   end
 
   def a_ok(sitemap)
-    puts "checked #{sitemap.checked} pages and everything was ok".green.bold
+    puts "  checked #{sitemap.checked} pages and everything was ok".green.bold
   end
 
   def nothing_doing
-    puts 'this sitemap did not contain any pages'.green
+    puts '  this sitemap did not contain any pages'.green
   end
 end
