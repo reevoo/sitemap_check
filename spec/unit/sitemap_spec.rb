@@ -75,10 +75,11 @@ describe SitemapCheck::Sitemap do
   end
 
   describe '#missing_pages' do
-    let(:missing_page_1) { double(:missing_page, exists?: false, url: 'missing_page_1') }
-    let(:missing_page_2) { double(:missing_page, exists?: false, url: 'missing_page_2') }
-    let(:good_page) { double(:missing_page, exists?: true) }
-    let(:response) { double(:response, ok?: true, body: xml) }
+    let(:missing_page_1) { double(:missing_page, exists?: false, error: nil, url: 'missing_page_1') }
+    let(:missing_page_2) { double(:missing_page, exists?: false, error: nil, url: 'missing_page_2') }
+    let(:error_page)     { double(:error_page, exists?: true, error: true, url: 'error_page') }
+    let(:good_page)      { double(:good_page, exists?: true, error: nil) }
+    let(:response)       { double(:response, ok?: true, body: xml) }
     let(:xml) do
       '
         <urlset>
@@ -94,6 +95,9 @@ describe SitemapCheck::Sitemap do
           <url>
             <loc>missing_page_2</loc>
           </url>
+          <url>
+            <loc>error_page</loc>
+          </url>
         </urlset>
       '
     end
@@ -101,12 +105,21 @@ describe SitemapCheck::Sitemap do
     before do
       allow(SitemapCheck::Page).to receive(:new).with('missing_page_1', anything).and_return(missing_page_1)
       allow(SitemapCheck::Page).to receive(:new).with('missing_page_2', anything).and_return(missing_page_2)
+      allow(SitemapCheck::Page).to receive(:new).with('error_page', anything).and_return(error_page)
       allow(SitemapCheck::Page).to receive(:new).with('good_page', anything).and_return(good_page)
     end
 
     it 'only returns the pages that dont exist' do
       capture_stdout do
         expect(subject.missing_pages).to eq([missing_page_1, missing_page_2])
+      end
+    end
+
+    describe '#errored_page' do
+      it 'returns the pages that returned an error' do
+        capture_stdout do
+          expect(subject.errored_pages).to eq([error_page])
+        end
       end
     end
 
@@ -120,12 +133,13 @@ describe SitemapCheck::Sitemap do
       end
     end
 
-    it 'outputs messages about the missing pages to stout' do
+    it 'outputs messages about the missing and errored pages to stout' do
       output = capture_stdout do
         subject.missing_pages
       end
 
       expect(output).to include 'missing: missing_page_1'
+      expect(output).to include 'warning: error connecting to error_page'
       expect(output).to include 'missing: missing_page_2'
     end
 

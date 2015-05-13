@@ -28,6 +28,10 @@ class SitemapCheck
       @_misssing ||= find_missing_pages
     end
 
+    def errored_pages
+      pages.select(&:error)
+    end
+
     def exists? # rubocop:disable Style/TrivialAccessors
       @ok
     end
@@ -50,10 +54,8 @@ class SitemapCheck
         Thread.new do
           begin
             while (page = q.pop(true))
-              unless page.exists?
-                logger.log "  missing: #{page.url}".red
-                page
-              end
+              logger.log "  missing: #{page.url}".red unless page.exists?
+              logger.log "  warning: error connecting to #{page.url}".magenta if page.error
             end
           rescue ThreadError # rubocop:disable Lint/HandleExceptions
           end

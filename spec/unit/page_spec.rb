@@ -30,30 +30,34 @@ describe SitemapCheck::Page do
     end
 
     context 'on a SocketError' do
-      it 'tries 5 times then returns false' do
+      it 'tries 5 times then returns true and saves the error' do
         expect(httpclient).to receive(:head).exactly(5).times.and_raise(SocketError)
-        expect(subject.exists?).to be_falsey
+        expect(subject.exists?).to be_truthy
+        expect(subject.error).to be_a SocketError
       end
     end
 
     context 'on a ConnectTimeoutError' do
       it 'tries 5 times then returns false' do
         expect(httpclient).to receive(:head).exactly(5).times.and_raise(HTTPClient::ConnectTimeoutError)
-        expect(subject.exists?).to be_falsey
+        expect(subject.exists?).to be_truthy
+        expect(subject.error).to be_a HTTPClient::ConnectTimeoutError
       end
     end
 
     context 'on a Errno::ETIMEDOUT' do
       it 'tries 5 times then returns false' do
         expect(httpclient).to receive(:head).exactly(5).times.and_raise(Errno::ETIMEDOUT)
-        expect(subject.exists?).to be_falsey
+        expect(subject.exists?).to be_truthy
+        expect(subject.error).to be_a Errno::ETIMEDOUT
       end
     end
 
     context 'on a HTTPClient::BadResponseError' do
       it 'tries 5 times then returns false' do
         expect(httpclient).to receive(:head).exactly(1).times.and_raise(HTTPClient::BadResponseError, 'bad response')
-        expect(subject.exists?).to be_falsey
+        expect(subject.exists?).to be_truthy
+        expect(subject.error).to be_a HTTPClient::BadResponseError
       end
     end
   end

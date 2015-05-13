@@ -86,6 +86,36 @@ describe SitemapCheck do
 
   end
 
+  context 'happy path with errors' do
+
+    before do
+      allow(http).to receive(:get)
+        .with(sitemap_index_url, anything)
+        .and_return(double(ok?: true, body: sitemap_index_xml))
+      allow(http).to receive(:get).with(sitemap_1_url, anything).and_return(double(ok?: true, body: sitemap_1_xml))
+      allow(http).to receive(:get).with(sitemap_2_url, anything).and_return(double(ok?: true, body: sitemap_2_xml))
+      [kitten_url, puppy_url, more_puppies_url].each do |url|
+        allow(http).to receive(:head).with(url, anything).and_return(double(ok?: true))
+      end
+      allow(http).to receive(:head).with(more_kittens_url, anything).and_raise(HTTPClient::BadResponseError, 'timeout')
+    end
+
+    it 'checks all the urls correctly' do
+      output = capture_stdout do
+        with_env('CHECK_URL' => sitemap_index_url) do
+          expect { subject.check }.to raise_error { |e| expect(e).to be_success }
+        end
+      end
+
+      expect(output).to include 'Expanding Sitemaps from https://www.example.com/sitemap_index.xml'
+      expect(output).to include 'Checking https://www.example.com/kittens.xml'
+      expect(output).to include 'warning: error connecting to http://example.com/more_kittens'
+      expect(output).to include 'Checking https://www.example.com/puppies.xml'
+      expect(output).to include 'checked 2 pages and everything was ok'
+    end
+
+  end
+
   context 'unhappy path' do
     before do
       allow(http).to receive(:get)
