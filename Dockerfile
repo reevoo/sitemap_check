@@ -1,11 +1,13 @@
 FROM quay.io/assemblyline/alpine:3.5
 
+MAINTAINER ed@reevoo.com
+ARG VERSION
 RUN apk add --no-cache --virtual .builddeps \
       build-base \
       ruby-dev=2.3.3-r100 \
       ruby=2.3.3-r100 \
       zlib-dev \
-    && gem install sitemap_check -v $VERSION --no-document \
+    && gem install sitemap_check --no-document -v $VERSION \
     && runDeps="$( \
       scanelf --needed --nobanner --recursive /usr/lib/ruby/gems \
         | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
