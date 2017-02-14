@@ -5,7 +5,7 @@ RUN apk add --no-cache --virtual .builddeps \
       ruby-dev=2.3.3-r100 \
       ruby=2.3.3-r100 \
       zlib-dev \
-    && gem install sitemap_check --no-document \
+    && gem install sitemap_check -v $VERSION --no-document \
     && runDeps="$( \
       scanelf --needed --nobanner --recursive /usr/lib/ruby/gems \
         | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \

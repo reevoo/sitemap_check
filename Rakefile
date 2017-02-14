@@ -12,8 +12,8 @@ task release: [:spec, :reevoocop]
 task build:   [:spec, :reevoocop]
 
 task :release do
-  sh "docker build -t #{DOCKER_REPO}:#{SitemapCheck::VERSION} ."
-  sh "docker build -t #{DOCKER_REPO}:latest ."
+  sh "docker build --build-arg VERSION=#{SitemapCheck::VERSION} -t #{DOCKER_REPO}:#{SitemapCheck::VERSION} ."
+  sh "docker tag #{DOCKER_REPO}:#{SitemapCheck::VERSION} #{DOCKER_REPO}:latest"
   sh "docker push #{DOCKER_REPO}:#{SitemapCheck::VERSION}"
   sh "docker push #{DOCKER_REPO}:latest"
 end
