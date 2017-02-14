@@ -11,6 +11,7 @@ class SitemapCheck
       self.url = url
       self.checked = 0
       self.http = http
+      self.queue = Queue.new
       setup_doc
     end
 
@@ -38,7 +39,7 @@ class SitemapCheck
 
     protected
 
-    attr_accessor :http, :doc, :logger
+    attr_accessor :http, :doc, :logger, :queue
     attr_writer :url, :checked
 
     private
@@ -47,22 +48,33 @@ class SitemapCheck
       ENV.fetch("CONCURRENCY", "10").to_i
     end
 
-    def find_missing_pages # rubocop:disable Metrics/AbcSize
-      q = Queue.new
-      pages.each { |page| q.push page }
+    def find_missing_pages
+      queue_pages
+      check_pages
+      pages.reject(&:exists?)
+    end
+
+    def check_pages
       concurency.times.map do
         Thread.new do
           begin
-            while (page = q.pop(true))
-              logger.log "  missing: #{page.url}".red unless page.exists?
-              logger.log "  warning: error connecting to #{page.url}".magenta if page.error
-            end
-          rescue ThreadError # rubocop:disable Lint/HandleExceptions
+            nil while check_page(queue.pop(true))
+          rescue ThreadError
+            nil
           end
         end
       end.each(&:join)
       self.checked = pages.count
-      pages.reject(&:exists?)
+    end
+
+    def check_page(page)
+      return unless page
+      logger.log "  missing: #{page.url}".red unless page.exists?
+      logger.log "  warning: error connecting to #{page.url}".magenta if page.error
+    end
+
+    def queue_pages
+      pages.each { |page| queue.push page }
     end
 
     def setup_doc
