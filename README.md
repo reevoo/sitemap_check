@@ -12,19 +12,19 @@
 ## Usage
 
 ```bash
-$ CHECK_URL=http://reevoo.com/sitemap_index.xml sitemap_check
+$ CHECK_URL=http://www.reevoo.com/sitemap_index.xml sitemap_check
 ```
 
 `CHECK_URL` can also be passed as an argument to sitemap_check
 
 ```bash
-$ sitemap_check http://reevoo.com/sitemap_index.xml
+$ sitemap_check http://www.reevoo.com/sitemap_index.xml
 ```
 
 # Docker
 
 ```bash
-$ docker run --rm quay.io/reevoo/sitemap_check https://reevoo.com/sitemap_index.xml
+$ docker run --rm quay.io/reevoo/sitemap_check https://www.reevoo.com/sitemap_index.xml
 ```
 
 ## Config
