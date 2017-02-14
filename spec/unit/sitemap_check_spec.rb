@@ -55,7 +55,7 @@ describe SitemapCheck do
   let(:more_puppies_url) { "http://example.com/more_puppies" }
 
   let(:http) { double(:httpclient) }
-  subject { described_class.new(http) }
+  subject { described_class.new(nil, http) }
 
 
   context "happy path" do
@@ -70,17 +70,34 @@ describe SitemapCheck do
       end
     end
 
-    it "checks all the urls correctly" do
-      output = capture_stdout do
-        with_env("CHECK_URL" => sitemap_index_url) do
+    context "index url in environment" do
+      it "checks all the urls correctly" do
+        output = capture_stdout do
+          with_env("CHECK_URL" => sitemap_index_url) do
+            expect { subject.check }.to raise_error { |e| expect(e).to be_success }
+          end
+        end
+
+        expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
+        expect(output).to include "Checking https://www.example.com/kittens.xml"
+        expect(output).to include "Checking https://www.example.com/puppies.xml"
+        expect(output).to include "checked 2 pages and everything was ok"
+      end
+    end
+
+    context "index url as param" do
+      subject { described_class.new(sitemap_index_url, http) }
+
+      it "checks all the urls correctly" do
+        output = capture_stdout do
           expect { subject.check }.to raise_error { |e| expect(e).to be_success }
         end
-      end
 
-      expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
-      expect(output).to include "Checking https://www.example.com/kittens.xml"
-      expect(output).to include "Checking https://www.example.com/puppies.xml"
-      expect(output).to include "checked 2 pages and everything was ok"
+        expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
+        expect(output).to include "Checking https://www.example.com/kittens.xml"
+        expect(output).to include "Checking https://www.example.com/puppies.xml"
+        expect(output).to include "checked 2 pages and everything was ok"
+      end
     end
   end
 

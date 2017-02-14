@@ -4,16 +4,17 @@ require "sitemap_check/sitemap"
 class SitemapCheck
 
 
-  def self.check
+  def self.check(url)
     $stdout.sync = true
-    new.check
+    new(url).check
   end
 
-  def initialize(http = HTTPClient.new)
+  def initialize(url = nil, http = HTTPClient.new)
     self.start_time = Time.now
     self.exit_code = 0
-    puts "Expanding Sitemaps from #{ENV["CHECK_URL"]}"
-    self.sitemaps = Sitemap.new(ENV["CHECK_URL"], http).sitemaps
+    check_url = url || ENV.fetch("CHECK_URL")
+    puts "Expanding Sitemaps from #{check_url}"
+    self.sitemaps = Sitemap.new(check_url, http).sitemaps
   end
 
   def check
@@ -30,7 +31,7 @@ class SitemapCheck
   private
 
   def stats
-    puts "checked #{sitemaps.count} sitemaps and #{checked_pages} in #{time_taken} seconds"
+    puts "checked #{sitemaps.count} sitemaps and #{checked_pages} pages in #{time_taken} seconds"
     puts "thats #{pages_per_second} pages per second"
   end
 

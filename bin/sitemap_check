@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
 
 require "sitemap_check"
-SitemapCheck.check
+puts ARGV[0]
+SitemapCheck.check ARGV[0]
