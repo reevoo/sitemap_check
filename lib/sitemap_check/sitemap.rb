@@ -1,8 +1,8 @@
-require 'httpclient'
-require 'sitemap_check/page'
-require 'sitemap_check/logger'
-require 'nokogiri'
-require 'colorize'
+require "httpclient"
+require "sitemap_check/page"
+require "sitemap_check/logger"
+require "nokogiri"
+require "colorize"
 
 class SitemapCheck
   class Sitemap
@@ -44,7 +44,7 @@ class SitemapCheck
     private
 
     def concurency
-      ENV.fetch('CONCURRENCY', '10').to_i
+      ENV.fetch("CONCURRENCY", "10").to_i
     end
 
     def find_missing_pages # rubocop:disable Metrics/AbcSize

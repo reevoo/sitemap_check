@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 
-require 'sitemap_check'
+require "sitemap_check"
 SitemapCheck.check

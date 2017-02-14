@@ -1,5 +1,5 @@
-require 'colorize'
-require 'sitemap_check/sitemap'
+require "colorize"
+require "sitemap_check/sitemap"
 
 class SitemapCheck
 
@@ -12,8 +12,8 @@ class SitemapCheck
   def initialize(http = HTTPClient.new)
     self.start_time = Time.now
     self.exit_code = 0
-    puts "Expanding Sitemaps from #{ENV['CHECK_URL']}"
-    self.sitemaps = Sitemap.new(ENV['CHECK_URL'], http).sitemaps
+    puts "Expanding Sitemaps from #{ENV["CHECK_URL"]}"
+    self.sitemaps = Sitemap.new(ENV["CHECK_URL"], http).sitemaps
   end
 
   def check
@@ -51,7 +51,7 @@ class SitemapCheck
       puts "  #{sitemap.url} does not exist".red.bold
       self.exit_code = 1
     end
-    puts ''
+    puts ""
   end
 
   def good_sitemaps
@@ -73,7 +73,7 @@ class SitemapCheck
         nothing_doing
       end
     end
-    puts ''
+    puts ""
   end
 
   def missing_pages(sitemap)
@@ -86,6 +86,6 @@ class SitemapCheck
   end
 
   def nothing_doing
-    puts '  this sitemap did not contain any pages'.green
+    puts "  this sitemap did not contain any pages".green
   end
 end

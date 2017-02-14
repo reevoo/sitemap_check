@@ -1,4 +1,4 @@
-require 'httpclient'
+require "httpclient"
 
 class SitemapCheck
   class Page
