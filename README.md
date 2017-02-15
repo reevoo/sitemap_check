@@ -1,5 +1,6 @@
 # Sitemap Check
 
+[![Docker Repository on Quay](https://quay.io/repository/reevoo/sitemap_check/status "Docker Repository on Quay")](https://quay.io/repository/reevoo/sitemap_check)
 [![Build Status](https://travis-ci.org/reevoo/sitemap_check.svg?branch=master)](https://travis-ci.org/reevoo/sitemap_check)
 [![Code Climate](https://codeclimate.com/github/reevoo/sitemap_check/badges/gpa.svg)](https://codeclimate.com/github/reevoo/sitemap_check)
 [![Test Coverage](https://codeclimate.com/github/reevoo/sitemap_check/badges/coverage.svg)](https://codeclimate.com/github/reevoo/sitemap_check/coverage)
