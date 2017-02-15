@@ -31,8 +31,8 @@ $ docker run --rm quay.io/reevoo/sitemap_check https://www.reevoo.com/sitemap_in
 
 Config can be set with enviroment variables
 
-variable     | default | description
--------------|---------|-------------
-`CHECK_URL`  | `nil`   | The url of the sitemap or sitemap index to check
-`CONCURRENCY`| `10`    | The number of concurent threads to use when checking the sitemap
-
+variable           | default | description
+-------------------|---------|-------------
+`CHECK_URL`        | `nil`   | The url of the sitemap or sitemap index to check
+`CONCURRENCY`      | `10`    | The number of concurent threads to use when checking the sitemap
+`REPLACEMENT_HOST` | `nil`   | Replace the hostname when requesting pages, can be useful for example to test a production sitemap against a staging website.

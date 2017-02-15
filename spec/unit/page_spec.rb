@@ -7,6 +7,14 @@ describe SitemapCheck::Page do
 
   describe "#url" do
     specify { expect(subject.url).to eq url }
+
+    context "with a replacement host" do
+      it "uses the replacement host" do
+        with_env("REPLACEMENT_HOST" => "staging.reevoo.com") do
+          expect(subject.url).to eq "https://staging.reevoo.com/foo.html"
+        end
+      end
+    end
   end
 
   describe "checking a page" do
