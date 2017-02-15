@@ -3,7 +3,7 @@ require "pry"
 require "simplecov"
 
 SimpleCov.start do
-  minimum_coverage 99
+  minimum_coverage 100
 end
 
 def capture_stdout

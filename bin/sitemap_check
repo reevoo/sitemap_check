@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 
 require "sitemap_check"
-SitemapCheck.check ARGV[0]
+SitemapCheck.check ENV.fetch("CHECK_URL", ARGV[0])

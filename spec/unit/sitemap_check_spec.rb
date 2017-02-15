@@ -54,76 +54,49 @@ describe SitemapCheck do
   let(:puppy_url) { "http://example.com/puppies" }
   let(:more_puppies_url) { "http://example.com/more_puppies" }
 
-  let(:http) { double(:httpclient) }
-  subject { described_class.new(nil, http) }
-
-
   context "happy path" do
     before do
-      allow(http).to receive(:get)
-        .with(sitemap_index_url, anything)
-        .and_return(double(ok?: true, body: sitemap_index_xml))
-      allow(http).to receive(:get).with(sitemap_1_url, anything).and_return(double(ok?: true, body: sitemap_1_xml))
-      allow(http).to receive(:get).with(sitemap_2_url, anything).and_return(double(ok?: true, body: sitemap_2_xml))
+      Typhoeus.stub(sitemap_index_url).and_return(Typhoeus::Response.new(code: 200, body: sitemap_index_xml))
+      Typhoeus.stub(sitemap_1_url).and_return(Typhoeus::Response.new(code: 200, body: sitemap_1_xml))
+      Typhoeus.stub(sitemap_2_url).and_return(Typhoeus::Response.new(code: 200, body: sitemap_2_xml))
       [kitten_url, more_kittens_url, puppy_url, more_puppies_url].each do |url|
-        allow(http).to receive(:head).with(url, anything).and_return(double(ok?: true))
+        Typhoeus.stub(url).and_return(Typhoeus::Response.new(code: 200))
       end
     end
 
-    context "index url in environment" do
-      it "checks all the urls correctly" do
-        output = capture_stdout do
-          with_env("CHECK_URL" => sitemap_index_url) do
-            expect { subject.check }.to raise_error { |e| expect(e).to be_success }
-          end
-        end
-
-        expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
-        expect(output).to include "Checking https://www.example.com/kittens.xml"
-        expect(output).to include "Checking https://www.example.com/puppies.xml"
-        expect(output).to include "checked 2 pages and everything was ok"
+    it "checks all the urls correctly" do
+      output = capture_stdout do
+        expect { described_class.check(sitemap_index_url) }.to raise_error { |e| expect(e).to be_success }
       end
-    end
 
-    context "index url as param" do
-      subject { described_class.new(sitemap_index_url, http) }
-
-      it "checks all the urls correctly" do
-        output = capture_stdout do
-          expect { subject.check }.to raise_error { |e| expect(e).to be_success }
-        end
-
-        expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
-        expect(output).to include "Checking https://www.example.com/kittens.xml"
-        expect(output).to include "Checking https://www.example.com/puppies.xml"
-        expect(output).to include "checked 2 pages and everything was ok"
-      end
+      expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
+      expect(output).to include "Checking https://www.example.com/kittens.xml"
+      expect(output).to include "Checking https://www.example.com/puppies.xml"
+      expect(output).to include "checked 2 pages and everything was ok"
     end
   end
 
   context "happy path with errors" do
     before do
-      allow(http).to receive(:get)
-        .with(sitemap_index_url, anything)
-        .and_return(double(ok?: true, body: sitemap_index_xml))
-      allow(http).to receive(:get).with(sitemap_1_url, anything).and_return(double(ok?: true, body: sitemap_1_xml))
-      allow(http).to receive(:get).with(sitemap_2_url, anything).and_return(double(ok?: true, body: sitemap_2_xml))
+      Typhoeus.stub(sitemap_index_url).and_return(Typhoeus::Response.new(code: 200, body: sitemap_index_xml))
+      Typhoeus.stub(sitemap_1_url).and_return(Typhoeus::Response.new(code: 200, body: sitemap_1_xml))
+      Typhoeus.stub(sitemap_2_url).and_return(Typhoeus::Response.new(code: 200, body: sitemap_2_xml))
       [kitten_url, puppy_url, more_puppies_url].each do |url|
-        allow(http).to receive(:head).with(url, anything).and_return(double(ok?: true))
+        Typhoeus.stub(url).and_return(Typhoeus::Response.new(code: 200))
       end
-      allow(http).to receive(:head).with(more_kittens_url, anything).and_raise(HTTPClient::BadResponseError, "timeout")
+      response = Typhoeus::Response.new
+      allow(response).to receive(:timed_out?).and_return(true)
+      Typhoeus.stub(more_kittens_url).and_return(response)
     end
 
     it "checks all the urls correctly" do
       output = capture_stdout do
-        with_env("CHECK_URL" => sitemap_index_url) do
-          expect { subject.check }.to raise_error { |e| expect(e).to be_success }
-        end
+        expect { described_class.check(sitemap_index_url) }.to raise_error { |e| expect(e).to be_success }
       end
 
       expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
       expect(output).to include "Checking https://www.example.com/kittens.xml"
-      expect(output).to include "warning: error connecting to http://example.com/more_kittens"
+      expect(output).to include "warning: request to http://example.com/more_kittens timed out"
       expect(output).to include "Checking https://www.example.com/puppies.xml"
       expect(output).to include "checked 2 pages and everything was ok"
     end
@@ -131,20 +104,16 @@ describe SitemapCheck do
 
   context "unhappy path" do
     before do
-      allow(http).to receive(:get)
-        .with(sitemap_index_url, anything)
-        .and_return(double(ok?: true, body: sitemap_index_xml))
-      allow(http).to receive(:get).with(sitemap_1_url, anything).and_return(double(ok?: true, body: sitemap_1_xml))
-      allow(http).to receive(:get).with(sitemap_2_url, anything).and_return(double(ok?: false))
-      allow(http).to receive(:head).with(kitten_url, anything).and_return(double(ok?: true))
-      allow(http).to receive(:head).with(more_kittens_url, anything).and_return(double(ok?: false))
+      Typhoeus.stub(sitemap_index_url).and_return(Typhoeus::Response.new(code: 200, body: sitemap_index_xml))
+      Typhoeus.stub(sitemap_1_url).and_return(Typhoeus::Response.new(code: 200, body: sitemap_1_xml))
+      Typhoeus.stub(sitemap_2_url).and_return(Typhoeus::Response.new(code: 404))
+      Typhoeus.stub(kitten_url).and_return(Typhoeus::Response.new(code: 200))
+      Typhoeus.stub(more_kittens_url).and_return(Typhoeus::Response.new(code: 404))
     end
 
     it "checks all the urls correctly" do
       output = capture_stdout do
-        with_env("CHECK_URL" => sitemap_index_url) do
-          expect { subject.check }.to raise_error { |e| expect(e).to_not be_success }
-        end
+        expect { described_class.check(sitemap_index_url) }.to raise_error { |e| expect(e).to_not be_success }
       end
 
       expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"

@@ -2,62 +2,52 @@ require "spec_helper"
 require "sitemap_check/page"
 
 describe SitemapCheck::Page do
-  let(:httpclient) { double }
   let(:url) { "https://example.com/foo.html" }
-  subject { described_class.new(url, httpclient, 0) }
+  subject { described_class.new(url) }
 
   describe "#url" do
     specify { expect(subject.url).to eq url }
   end
 
-  describe "#exists?" do
+  describe "checking a page" do
+    let(:output) { capture_stdout { subject.request.run } }
+
     context "the url is ok" do
       before do
-        response = double(ok?: true)
-        allow(httpclient).to receive(:head).with(url, anything).and_return(response)
+        Typhoeus.stub(url).and_return(Typhoeus::Response.new(code: 200))
+        output
       end
 
-      specify { expect(subject.exists?).to be_truthy }
+      specify { expect(subject.exists).to be_truthy }
     end
 
     context "the url is not ok" do
       before do
-        response = double(ok?: false)
-        allow(httpclient).to receive(:head).with(url, anything).and_return(response)
+        Typhoeus.stub(url).and_return(Typhoeus::Response.new(code: 404))
+        output
       end
 
-      specify { expect(subject.exists?).to be_falsey }
-    end
+      specify { expect(subject.exists).to be_falsey }
+      specify { expect(subject.error).to be_falsey }
 
-    context "on a SocketError" do
-      it "tries 5 times then returns true and saves the error" do
-        expect(httpclient).to receive(:head).exactly(5).times.and_raise(SocketError)
-        expect(subject.exists?).to be_truthy
-        expect(subject.error).to be_a SocketError
+      it "logs an error" do
+        expect(output).to include "missing: #{url}"
       end
     end
 
-    context "on a ConnectTimeoutError" do
-      it "tries 5 times then returns false" do
-        expect(httpclient).to receive(:head).exactly(5).times.and_raise(HTTPClient::ConnectTimeoutError)
-        expect(subject.exists?).to be_truthy
-        expect(subject.error).to be_a HTTPClient::ConnectTimeoutError
+    context "the request timed out" do
+      before do
+        response = Typhoeus::Response.new
+        allow(response).to receive(:timed_out?).and_return(true)
+        Typhoeus.stub(url).and_return(response)
+        output
       end
-    end
 
-    context "on a Errno::ETIMEDOUT" do
-      it "tries 5 times then returns false" do
-        expect(httpclient).to receive(:head).exactly(5).times.and_raise(Errno::ETIMEDOUT)
-        expect(subject.exists?).to be_truthy
-        expect(subject.error).to be_a Errno::ETIMEDOUT
-      end
-    end
+      specify { expect(subject.exists).to be_truthy }
+      specify { expect(subject.error).to be_falsey }
 
-    context "on a HTTPClient::BadResponseError" do
-      it "tries 5 times then returns false" do
-        expect(httpclient).to receive(:head).exactly(1).times.and_raise(HTTPClient::BadResponseError, "bad response")
-        expect(subject.exists?).to be_truthy
-        expect(subject.error).to be_a HTTPClient::BadResponseError
+      it "logs an error" do
+        expect(output).to include "warning: request to #{url} timed out"
       end
     end
   end

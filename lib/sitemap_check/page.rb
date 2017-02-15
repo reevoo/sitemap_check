@@ -1,35 +1,38 @@
-require "httpclient"
+require "typhoeus"
+require "sitemap_check/logger"
+require "colorize"
 
 class SitemapCheck
   class Page
-    def initialize(url, http = HTTPClient.new, holdoff = 1)
+    def initialize(url, logger = Logger.new)
       self.url = url
-      self.http = http
-      self.tries = 0
-      self.holdoff = holdoff
+      self.request = Typhoeus::Request.new(self.url, method: :head, followlocation: true)
+      self.logger = logger
+      setup_callbacks
     end
 
-    attr_reader :url, :error
-
-    def exists?
-      @_exists ||= http.head(url, follow_redirect: true).ok?
-    rescue SocketError, HTTPClient::ConnectTimeoutError, Errno::ETIMEDOUT => e
-      self.tries += 1
-      if tries < 5
-        sleep holdoff
-        retry
-      else
-        self.error = e
-        @_exists = true
-      end
-    rescue HTTPClient::BadResponseError => e
-      self.error = e
-      @_exists = true
-    end
+    attr_reader :url, :request, :exists, :error
 
     protected
 
-    attr_accessor :http, :tries, :holdoff
-    attr_writer :url, :error
+    attr_writer :url, :request
+    attr_accessor :logger
+
+    def setup_callbacks # rubocop:disable Metrics/AbcSize
+      request.on_complete do |response|
+        if response.success?
+          @exists = true
+        elsif response.timed_out?
+          @exists = true
+          logger.log "  warning: request to #{url} timed out".magenta
+        elsif response.code == 404
+          @exists = false
+          logger.log "  missing: #{url}".magenta
+        else
+          @error = true
+          logger.log "  error: (#{response.code}) while connecting to #{url}".magenta
+        end
+      end
+    end
   end
 end

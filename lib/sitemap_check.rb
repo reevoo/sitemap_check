@@ -9,12 +9,13 @@ class SitemapCheck
     new(url).check
   end
 
-  def initialize(url = nil, http = HTTPClient.new)
+  def initialize(check_url)
     self.start_time = Time.now
     self.exit_code = 0
-    check_url = url || ENV.fetch("CHECK_URL")
+    check_url = check_url
     puts "Expanding Sitemaps from #{check_url}"
-    self.sitemaps = Sitemap.new(check_url, http).sitemaps
+    self.sitemaps = Sitemap.new(check_url).sitemaps
+    Typhoeus::Config.user_agent = "SitemapCheckbot/#{VERSION} (+https://github.com/reevoo/sitemap_check)"
   end
 
   def check
@@ -65,6 +66,7 @@ class SitemapCheck
 
   def check_pages_in(sitemap)
     puts "Checking #{sitemap.url}"
+    sitemap.check_pages
     if sitemap.missing_pages.any?
       missing_pages(sitemap)
     else

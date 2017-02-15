@@ -4,31 +4,22 @@ require "sitemap_check/sitemap"
 describe SitemapCheck::Sitemap do
   let(:http) { double }
   let(:url) { "http://example.com/sitemap.xml" }
-  let(:response) { double(:response) }
-  subject { described_class.new(url, http) }
+  let(:response) { Typhoeus::Response.new }
+  subject { described_class.new(url) }
 
   before do
-    allow(http).to receive(:get).and_return(double(ok?: false))
-    allow(http).to receive(:get).with(url, anything).and_return(response)
+    Typhoeus.stub(url).and_return(response)
   end
 
   describe "#exists?" do
     context "when the sitemap cannot be found" do
-      let(:response) { double(:response, ok?: false, body: "") }
-
-      specify { expect(subject.exists?).to be_falsey }
-    end
-
-    context "when the request for the sitemap throws a HTTPClient::BadResponseError" do
-      before do
-        allow(http).to receive(:get).and_raise(HTTPClient::BadResponseError, "bad response")
-      end
+      let(:response) { Typhoeus::Response.new(code: 404) }
 
       specify { expect(subject.exists?).to be_falsey }
     end
 
     context "when the sitemap is found" do
-      let(:response) { double(:response, ok?: true, body: "") }
+      let(:response) { Typhoeus::Response.new(code: 200, body: "") }
 
       specify { expect(subject.exists?).to be_truthy }
     end
@@ -36,7 +27,7 @@ describe SitemapCheck::Sitemap do
 
   describe "#sitemaps" do
     context "simple sitemap" do
-      let(:response) { double(:response, ok?: true, body: "") }
+      let(:response) { Typhoeus::Response.new(code: 200, body: "") }
 
       it "returns an array containing subject" do
         expect(subject.sitemaps).to eq([subject])
@@ -48,7 +39,7 @@ describe SitemapCheck::Sitemap do
       end
 
       let(:url) { "http://example.com/sitemap_index.xml" }
-      let(:response) { double(:response, ok?: true, body: xml) }
+      let(:response) { Typhoeus::Response.new(code: 200, body: xml) }
       let(:xml) do
         '
         <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -73,11 +64,7 @@ describe SitemapCheck::Sitemap do
   end
 
   describe "#missing_pages" do
-    let(:missing_page_1) { double(:missing_page, exists?: false, error: nil, url: "missing_page_1") }
-    let(:missing_page_2) { double(:missing_page, exists?: false, error: nil, url: "missing_page_2") }
-    let(:error_page)     { double(:error_page, exists?: true, error: true, url: "error_page") }
-    let(:good_page)      { double(:good_page, exists?: true, error: nil) }
-    let(:response)       { double(:response, ok?: true, body: xml) }
+    let(:response)       { Typhoeus::Response.new(code: 200, body: xml) }
     let(:xml) do
       '
         <urlset>
@@ -101,44 +88,32 @@ describe SitemapCheck::Sitemap do
     end
 
     before do
-      allow(SitemapCheck::Page).to receive(:new).with("missing_page_1", anything).and_return(missing_page_1)
-      allow(SitemapCheck::Page).to receive(:new).with("missing_page_2", anything).and_return(missing_page_2)
-      allow(SitemapCheck::Page).to receive(:new).with("error_page", anything).and_return(error_page)
-      allow(SitemapCheck::Page).to receive(:new).with("good_page", anything).and_return(good_page)
+      Typhoeus.stub("good_page").and_return(Typhoeus::Response.new(code: 200))
+      Typhoeus.stub("missing_page_1").and_return(Typhoeus::Response.new(code: 404))
+      Typhoeus.stub("missing_page_2").and_return(Typhoeus::Response.new(code: 404))
+      Typhoeus.stub("error_page").and_return(Typhoeus::Response.new(code: 500))
+      capture_stdout { subject.check_pages }
     end
 
     it "only returns the pages that dont exist" do
-      capture_stdout do
-        expect(subject.missing_pages).to eq([missing_page_1, missing_page_2])
-      end
+      expect(subject.missing_pages.count).to eq 3
+      expect(subject.missing_pages.map(&:url)).to eq(%w(missing_page_1 missing_page_2 error_page))
     end
 
     describe "#errored_page" do
       it "returns the pages that returned an error" do
-        capture_stdout do
-          expect(subject.errored_pages).to eq([error_page])
-        end
+        expect(subject.errored_pages.count).to eq 1
+        expect(subject.errored_pages.map(&:url)).to eq(%w(error_page))
       end
     end
 
     context "with CONCURRENCY set" do
       it "still works" do
         with_env("CONCURRENCY" => "2") do
-          capture_stdout do
-            expect(subject.missing_pages).to eq([missing_page_1, missing_page_2])
-          end
+          expect(subject.missing_pages.count).to eq 3
+          expect(subject.missing_pages.map(&:url)).to eq(%w(missing_page_1 missing_page_2 error_page))
         end
       end
-    end
-
-    it "outputs messages about the missing and errored pages to stout" do
-      output = capture_stdout do
-        subject.missing_pages
-      end
-
-      expect(output).to include "missing: missing_page_1"
-      expect(output).to include "warning: error connecting to error_page"
-      expect(output).to include "missing: missing_page_2"
     end
 
     context "when there are no pages" do
