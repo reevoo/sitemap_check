@@ -1,5 +1,6 @@
 require "colorize"
 require "sitemap_check/sitemap"
+require "sitemap_check/version"
 
 class SitemapCheck
 

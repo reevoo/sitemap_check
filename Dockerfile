@@ -7,6 +7,7 @@ RUN apk add --no-cache --virtual .builddeps \
       ruby-dev=2.3.3-r100 \
       ruby=2.3.3-r100 \
       zlib-dev \
+      libffi-dev \
     && gem install sitemap_check --no-document -v $VERSION \
     && runDeps="$( \
       scanelf --needed --nobanner --recursive /usr/lib/ruby/gems \
@@ -15,6 +16,10 @@ RUN apk add --no-cache --virtual .builddeps \
         | xargs -r apk info --installed \
         | sort -u \
       )" \
-    && apk add --no-cache --virtual .rundeps $runDeps ruby=2.3.3-r100 ca-certificates \
+    && apk add --no-cache --virtual .rundeps \
+         $runDeps \
+         ca-certificates \
+         libcurl \
+         ruby=2.3.3-r100 \
     && apk del --no-cache .builddeps
 ENTRYPOINT ["sitemap_check"]
