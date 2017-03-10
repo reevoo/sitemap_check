@@ -1,5 +1,6 @@
 require "typhoeus"
 require "sitemap_check/logger"
+require "sitemap_check/validator"
 require "colorize"
 require "uri"
 
@@ -7,9 +8,16 @@ class SitemapCheck
   class Page
     def initialize(url, logger = Logger.new)
       self.uri = URI(url)
-      replace_host
-      self.request = Typhoeus::Request.new(self.url, method: :head, followlocation: true)
       self.logger = logger
+
+      replace_host
+
+      self.request = Typhoeus::Request.new(
+        self.url,
+        method: request_method,
+        followlocation: true,
+      )
+
       setup_callbacks
     end
 
@@ -32,6 +40,7 @@ class SitemapCheck
     def setup_callbacks # rubocop:disable Metrics/AbcSize
       request.on_complete do |response|
         if response.success?
+          validate(response)
           @exists = true
         elsif response.timed_out?
           @exists = true
@@ -44,6 +53,18 @@ class SitemapCheck
           logger.log "  error: (#{response.code}) while connecting to #{url}".magenta
         end
       end
+    end
+
+    def request_method
+      validate? ? :get : :head
+    end
+
+    def validate(response)
+      Validator.new(response, logger).validate if validate?
+    end
+
+    def validate?
+      ENV["VALIDATE"]
     end
   end
 end
