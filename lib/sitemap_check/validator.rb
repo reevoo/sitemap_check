@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "w3c_validators"
 
 class SitemapCheck

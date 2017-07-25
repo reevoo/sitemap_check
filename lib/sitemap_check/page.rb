@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "typhoeus"
 require "sitemap_check/logger"
 require "sitemap_check/validator"

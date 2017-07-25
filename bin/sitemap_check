@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require "sitemap_check"
 SitemapCheck.check ENV.fetch("CHECK_URL", ARGV[0])

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "colorize"
 require "sitemap_check/sitemap"
 require "sitemap_check/version"

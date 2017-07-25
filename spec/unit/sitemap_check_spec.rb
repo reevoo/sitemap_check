@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "spec_helper"
 require "sitemap_check"
 
@@ -66,7 +67,7 @@ describe SitemapCheck do
 
     it "checks all the urls correctly" do
       output = capture_stdout do
-        expect { described_class.check(sitemap_index_url) }.to raise_error { |e| expect(e).to be_success }
+        expect { described_class.check(sitemap_index_url) }.to raise_error ->(e) { expect(e).to be_success }
       end
 
       expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
@@ -91,7 +92,7 @@ describe SitemapCheck do
 
     it "checks all the urls correctly" do
       output = capture_stdout do
-        expect { described_class.check(sitemap_index_url) }.to raise_error { |e| expect(e).to be_success }
+        expect { described_class.check(sitemap_index_url) }.to raise_error ->(e) { expect(e).to be_success }
       end
 
       expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"
@@ -113,7 +114,7 @@ describe SitemapCheck do
 
     it "checks all the urls correctly" do
       output = capture_stdout do
-        expect { described_class.check(sitemap_index_url) }.to raise_error { |e| expect(e).to_not be_success }
+        expect { described_class.check(sitemap_index_url) }.to raise_error ->(e) { expect(e).to_not be_success }
       end
 
       expect(output).to include "Expanding Sitemaps from https://www.example.com/sitemap_index.xml"

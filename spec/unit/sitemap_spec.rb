@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "spec_helper"
 require "sitemap_check/sitemap"
 
@@ -55,16 +56,16 @@ describe SitemapCheck::Sitemap do
 
       it "returns an array containing all the sitemaps" do
         expect(subject.sitemaps.map(&:url)).to eq([
-          "http://www.example.com/sitemap.xml",
-          "http://www.example.com/sitemap2.xml",
-          url,
-        ])
+                                                    "http://www.example.com/sitemap.xml",
+                                                    "http://www.example.com/sitemap2.xml",
+                                                    url,
+                                                  ])
       end
     end
   end
 
   describe "#missing_pages" do
-    let(:response)       { Typhoeus::Response.new(code: 200, body: xml) }
+    let(:response) { Typhoeus::Response.new(code: 200, body: xml) }
     let(:xml) do
       '
         <urlset>

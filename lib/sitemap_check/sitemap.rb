@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "typhoeus"
 require "sitemap_check/page"
 require "sitemap_check/logger"
@@ -37,7 +38,7 @@ class SitemapCheck
       pages.select(&:error)
     end
 
-    def exists? # rubocop:disable Style/TrivialAccessors
+    def exists?
       @ok
     end
 
