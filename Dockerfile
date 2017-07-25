@@ -1,6 +1,6 @@
 FROM quay.io/assemblyline/alpine:3.5
 
-MAINTAINER ed@reevoo.com
+MAINTAINER devops@reevoo.com
 ARG VERSION
 RUN apk add --no-cache --virtual .builddeps \
       build-base \
