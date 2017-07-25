@@ -22,6 +22,14 @@ $ CHECK_URL=http://www.reevoo.com/sitemap_index.xml sitemap_check
 $ sitemap_check http://www.reevoo.com/sitemap_index.xml
 ```
 
+You can also run `sitemap_check` in validation mode:
+
+```bash
+$ VALIDATE=1 sitemap_check http://www.reevoo.com/sitemap_index.xml
+```
+
+This will validate response bodies with W3C's validation service.
+
 # Docker
 
 ```bash
