@@ -13,8 +13,18 @@ task release: %i[spec reevoocop]
 task build:   %i[spec reevoocop]
 
 task :release do
-  sh "docker build --build-arg VERSION=#{SitemapCheck::VERSION} -t #{DOCKER_REPO}:#{SitemapCheck::VERSION} ."
-  sh "docker tag #{DOCKER_REPO}:#{SitemapCheck::VERSION} #{DOCKER_REPO}:latest"
-  sh "docker push #{DOCKER_REPO}:#{SitemapCheck::VERSION}"
-  sh "docker push #{DOCKER_REPO}:latest"
+  Rake::Task["docker:release"].invoke
 end
+
+namespace :docker do
+  task :build do
+    sh "docker build --build-arg VERSION=#{SitemapCheck::VERSION} -t #{DOCKER_REPO}:#{SitemapCheck::VERSION} ."
+  end
+
+  task release: :build do
+    sh "docker tag #{DOCKER_REPO}:#{SitemapCheck::VERSION} #{DOCKER_REPO}:latest"
+    sh "docker push #{DOCKER_REPO}:#{SitemapCheck::VERSION}"
+    sh "docker push #{DOCKER_REPO}:latest"
+  end
+end
+
