@@ -23,8 +23,8 @@ class SitemapCheck
       return if result.errors.empty? && result.warnings.empty?
 
       log_url
-      log_errors(result)
-      log_warnings(result)
+      log(result.errors, "ERROR")
+      log(result.warnings, "WARNING")
       fail_if_too_many_messages
     end
 
@@ -35,22 +35,20 @@ class SitemapCheck
       logger.log response.effective_url.cyan
     end
 
-    def log_errors(result)
-      result.errors.each do |e|
-        logger.log "  ERROR: #{e.message}".red
-        logger.log "         #{e.source.inspect}"
+    def log(messages, level)
+      messages.each do |m|
+        logger.log "#{level.rjust(9)}: #{m.message}".colorize(log_colour(level))
+        logger.log "           #{m.source.inspect}"
 
         self.class.message_count += 1
       end
     end
 
-    def log_warnings(result)
-      result.warnings.each do |w|
-        logger.log "  WARNING: #{w.message}".yellow
-        logger.log "           #{w.source.inspect}"
-
-        self.class.message_count += 1
-      end
+    def log_colour(level)
+      {
+        "ERROR" => :red,
+        "WARNING" => :yellow,
+      }[level] || :default
     end
 
     def fail_if_too_many_messages

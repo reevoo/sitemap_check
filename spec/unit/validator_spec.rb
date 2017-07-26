@@ -20,6 +20,8 @@ describe SitemapCheck::Validator do
       .and_return(double(:result, errors: errors, warnings: warnings))
 
     allow(logger).to receive(:log) { |m| messages.push(m) }
+
+    described_class.message_count = 0
   end
 
   context "when there are no errors or warnings" do
@@ -55,11 +57,35 @@ describe SitemapCheck::Validator do
 
   context "when there are tonnes of messages" do
     let(:errors) { [error] * 50 }
-    let(:warnings) { [warning] * 51 }
 
-    it "raises an error and stops" do
-      expect { subject.validate }
-        .to raise_error(/more than 100 messages/)
+    context "more than 100" do
+      let(:warnings) { [warning] * 51 }
+
+      it "raises an error and stops" do
+        expect { subject.validate }
+          .to raise_error(/more than 100 messages/)
+      end
+    end
+
+    context "exactly 100" do
+      let(:warnings) { [warning] * 50 }
+
+      it "does not raise an error" do
+        expect { subject.validate }
+          .to_not raise_error
+      end
+    end
+
+    context "the count of messages is over 100 across instances" do
+      let(:errors) { [error] * 25 }
+      let(:warnings) { [warning] * 26 }
+
+      it "raises an error and stops" do
+        subject.validate
+        second_instance = described_class.new(response, logger)
+        expect { second_instance.validate }
+          .to raise_error(/more than 100 messages/)
+      end
     end
   end
 end
