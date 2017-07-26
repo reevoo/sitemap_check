@@ -27,4 +27,3 @@ namespace :docker do
     sh "docker push #{DOCKER_REPO}:latest"
   end
 end
-
